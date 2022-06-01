@@ -22,7 +22,8 @@ from pbench.server.database.models.datasets import (
     MetadataError,
 )
 
-from pbench.server.filetree import FileTree,DatasetNotFound
+from pbench.server.filetree import FileTree, DatasetNotFound
+
 
 class DatasetsAccess(ApiBase):
     """
@@ -49,7 +50,7 @@ class DatasetsAccess(ApiBase):
             role=API_OPERATION.READ,
         )
 
-        self.config= config
+        self.config = config
 
     def _get(self, json_data: JSON, request: Request) -> Response:
         """
@@ -76,24 +77,15 @@ class DatasetsAccess(ApiBase):
             str(dataset.owner_id), dataset.access, check_role=API_OPERATION.READ
         )
         try:
-
             file_tree = FileTree(self.config, self.logger)
-            tarball = file_tree.find_dataset(dataset.name)
-            # access_path = file_tree.access_dataset(dataset.name)
-            endd_path = os.path.join(file_tree.incoming_root,tarball.controller_name,dataset.name)
-            temp_out= Path(path)
-            res_file = os.path.join(endd_path, temp_out)
-            # res_file_acess = os.path.join(access_path, temp_out)
-            res_file1 = Path(res_file)
-
-            if res_file1.is_file():
-            # if os.path.isfile(res_file):
-                return send_file(res_file)
-            #     return {"status":"OK","message": "File found","path": res_file}
-
+            dataset_location = file_tree.access_dataset(dataset.name)
+            file_path = Path(os.path.join(dataset_location, Path(path)))
+            if file_path.is_file():
+                return send_file(file_path)
             else:
-                return {"status":"OK","message": "file not found","path": res_file}
+                raise APIAbort(
+                    HTTPStatus.NOT_FOUND, "File is not present in the given path"
+                )
+
         except DatasetNotFound as e:
             raise APIAbort(HTTPStatus.NOT_FOUND, str(e))
-        # return jsonify({"status":"OK","name":tarball.name, "controller":tarball.controller_name,"path":path})
-        # return jsonify({"status":"OK","data":new_data})

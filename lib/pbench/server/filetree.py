@@ -903,3 +903,24 @@ class FileTree:
         tarball.controller.delete(dataset)
         del self.datasets[dataset]
         self._clean_empties(tarball.controller_name)
+
+    def access_dataset(self, dataset: str) -> Path:
+        """
+        Given the name of a dataset,search the INCOMING tree directory for
+        the dataset directory.
+
+        Args:
+            dataset: The name of a dataset that might exist somewhere in the
+                file tree
+
+        Raises:
+            DatasetNotFound: the INCOMING tree does not contain a dataset ,either
+            it is not unpacked or dataset is not found .
+
+        Returns:
+            A Path of the dataset directory.
+        """
+        for dirs in self.incoming_root.rglob("*"):
+            if dirs.name == dataset:
+                return dirs.absolute()
+        raise DatasetNotFound(dataset)

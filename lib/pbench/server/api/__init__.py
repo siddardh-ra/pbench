@@ -92,7 +92,7 @@ def register_endpoints(api, app, config):
     )
     api.add_resource(
         DatasetsAccess,
-        f"{base_uri}/datasets/access/<string:dataset>/<path:path>",
+        f"{base_uri}/inventory/<string:dataset>/<path:path>",
         resource_class_args=(config, logger),
     )
     api.add_resource(
