@@ -11,6 +11,7 @@ from pathlib import Path
 
 
 class TestDatasetsAccess:
+
     @pytest.fixture()
     def query_get_as(self, client, server_config, more_datasets, provide_metadata):
         """
@@ -25,7 +26,7 @@ class TestDatasetsAccess:
         """
 
         def query_api(
-            dataset: str, username: str, expected_status: HTTPStatus, path: str
+            dataset: str,  username: str, expected_status: HTTPStatus ,path :str
         ) -> requests.Response:
             headers = None
             if username:
