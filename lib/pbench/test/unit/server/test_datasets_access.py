@@ -7,6 +7,7 @@ from pbench.server import JSON, PbenchServerConfig
 
 
 class TestDatasetsAccess:
+
     @pytest.fixture()
     def query_get_as(self, client, server_config, more_datasets, provide_metadata):
         """
@@ -21,16 +22,15 @@ class TestDatasetsAccess:
         """
 
         def query_api(
-            dataset: str, payload: JSON, username: str, expected_status: HTTPStatus
+            dataset: str,  username: str, expected_status: HTTPStatus ,path :str
         ) -> requests.Response:
             headers = None
             if username:
                 token = self.token(client, server_config, username)
                 headers = {"authorization": f"bearer {token}"}
             response = client.get(
-                f"{server_config.rest_uri}/inventory/{dataset}",
+                f"{server_config.rest_uri}/inventory/{dataset}/{path}",
                 headers=headers,
-                query_string=payload,
             )
             assert response.status_code == expected_status
 
@@ -54,3 +54,32 @@ class TestDatasetsAccess:
         data = response.json
         assert data["auth_token"]
         return data["auth_token"]
+
+    def test_get_no_dataset(self, query_get_as):
+        response = query_get_as(
+            "foobar",
+            "drb",
+            HTTPStatus.BAD_REQUEST,
+            "metadata.log"
+        )
+        assert response.json == {"message": "Dataset 'foobar' not found"}
+
+    def test_dataset_not_present(self, query_get_as):
+        response = query_get_as(
+            "fio_2",
+            "test",
+            HTTPStatus.NOT_FOUND,
+            "metadata.log"
+        )
+        assert response.json == {"message": "The dataset named 'fio_2' is not present in the file tree"}
+
+
+    # def test_dataset_in_given_path(self, query_get_as):
+    #     response = query_get_as(
+    #         "fio_1",
+    #         "drb",
+    #         HTTPStatus.NOT_FOUND,
+    #         "1-default/default.csv"
+    #     )
+    #     print(response)
+    #     assert response.status_code == HTTPStatus.OK
