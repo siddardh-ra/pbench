@@ -53,11 +53,13 @@ class DatasetsAccess(ApiBase):
                 authorization=API_AUTHORIZATION.DATASET,
             ),
         )
-        self.config = config
-
 
     def return_send_file(self, file_path):
         return send_file(file_path)
+
+    def return_send_file(self, file_path):
+        return send_file(file_path)
+
 
     def _get(self, params: ApiParams, request: Request) -> Response:
         """
@@ -85,7 +87,6 @@ class DatasetsAccess(ApiBase):
             file_path = Path(os.path.join(dataset_location, Path(path)))
             if file_path.is_file():
                 return self.return_send_file(file_path)
-
             else:
                 raise APIAbort(
                     HTTPStatus.NOT_FOUND, "File is not present in the given path"
