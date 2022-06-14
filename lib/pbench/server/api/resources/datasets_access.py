@@ -60,7 +60,6 @@ class DatasetsAccess(ApiBase):
     def return_send_file(self, file_path):
         return send_file(file_path)
 
-
     def _get(self, params: ApiParams, request: Request) -> Response:
         """
         Get the values of client-accessible dataset metadata keys.

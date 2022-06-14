@@ -89,4 +89,3 @@ class TestDatasetsAccess:
         response = query_get_as("fio_1", "drb", HTTPStatus.OK, "1-default/default.csv")
         print(response)
         assert response.status_code == HTTPStatus.OK
-
