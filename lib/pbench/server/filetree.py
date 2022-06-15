@@ -904,10 +904,10 @@ class FileTree:
         del self.datasets[dataset]
         self._clean_empties(tarball.controller_name)
 
-    def access_dataset(self, dataset: str) -> Path:
+    def find_inventory(self, dataset: str) -> Path:
         """
         Given the name of a dataset,search the INCOMING tree directory for
-        the dataset directory.
+        the dataset and return its relative path.
 
         Args:
             dataset: The name of a dataset that might exist somewhere in the

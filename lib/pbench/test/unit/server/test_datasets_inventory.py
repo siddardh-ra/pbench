@@ -1,13 +1,13 @@
 from http import HTTPStatus
 
-import flask
 import pytest
 import requests
 
 from pbench.server import JSON, PbenchServerConfig
-from pbench.server.api.resources.datasets_access import DatasetsAccess
+from pbench.server.api.resources.datasets_inventory import DatasetsInventory
 from pbench.server.filetree import FileTree
 from pathlib import Path
+from pbench.server.database.models.datasets import Dataset, DatasetNotFound
 
 
 class TestDatasetsAccess:
@@ -28,11 +28,15 @@ class TestDatasetsAccess:
             dataset: str, username: str, expected_status: HTTPStatus, path: str
         ) -> requests.Response:
             headers = None
+            try:
+                dataset = Dataset.query(name=dataset).resource_id
+            except DatasetNotFound:
+                dataset = dataset  # Allow passing deliberately bad value
             if username:
                 token = self.token(client, server_config, username)
                 headers = {"authorization": f"bearer {token}"}
             response = client.get(
-                f"{server_config.rest_uri}/inventory/{dataset}/{path}",
+                f"{server_config.rest_uri}/datasets/inventory/{dataset}/{path}",
                 headers=headers,
             )
             assert response.status_code == expected_status
@@ -58,11 +62,14 @@ class TestDatasetsAccess:
         assert data["auth_token"]
         return data["auth_token"]
 
-    def mock_access_dataset(self, dataset):
+    def mock_find_inventory(self, dataset):
         return "/dataset1/"
 
     def mock_is_file(self):
         return True
+
+    def mock_not_a_file(self):
+        return False
 
     def mock_send_file(self, file_path):
         return {"status": "OK"}
@@ -80,11 +87,18 @@ class TestDatasetsAccess:
             "message": "The dataset named 'fio_2' is not present in the file tree"
         }
 
+    def test_not_a_file(self, query_get_as, monkeypatch):
+        monkeypatch.setattr(FileTree, "find_inventory", self.mock_find_inventory)
+        monkeypatch.setattr(Path, "is_file", self.mock_not_a_file)
+        response = query_get_as("fio_2", "test", HTTPStatus.NOT_FOUND, "1-default")
+
+        assert response.json == {"message": "File is not present in the given path"}
+
     def test_dataset_in_given_path(self, query_get_as, monkeypatch):
 
-        monkeypatch.setattr(FileTree, "access_dataset", self.mock_access_dataset)
+        monkeypatch.setattr(FileTree, "find_inventory", self.mock_find_inventory)
         monkeypatch.setattr(Path, "is_file", self.mock_is_file)
-        monkeypatch.setattr(DatasetsAccess, "return_send_file", self.mock_send_file)
+        monkeypatch.setattr(DatasetsInventory, "return_send_file", self.mock_send_file)
 
         response = query_get_as("fio_1", "drb", HTTPStatus.OK, "1-default/default.csv")
         print(response)

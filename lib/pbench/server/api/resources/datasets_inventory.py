@@ -20,14 +20,12 @@ from pbench.server.api.resources import (
     Schema,
 )
 
-from pbench.server.filetree import FileTree, DatasetNotFound
-
-from pbench.server.database.models.datasets import Dataset, Metadata, MetadataError
+from pbench.server.filetree import DatasetNotFound, FileTree
 
 
-class DatasetsAccess(ApiBase):
+class DatasetsInventory(ApiBase):
     """
-    API class to retrieve and mutate Dataset metadata.
+    API class to retrieve files in a byte strean of a unpacked dataset.
     """
 
     def __init__(self, config: PbenchServerConfig, logger: Logger):
@@ -40,16 +38,6 @@ class DatasetsAccess(ApiBase):
                 uri_schema=Schema(
                     Parameter("dataset", ParamType.DATASET, required=True)
                 ),
-                query_schema=Schema(
-                    Parameter(
-                        "metadata",
-                        ParamType.LIST,
-                        element_type=ParamType.KEYWORD,
-                        keywords=Metadata.METADATA_KEYS,
-                        key_path=True,
-                        string_list=",",
-                    )
-                ),
                 authorization=API_AUTHORIZATION.DATASET,
             ),
         )
@@ -57,18 +45,15 @@ class DatasetsAccess(ApiBase):
     def return_send_file(self, file_path):
         return send_file(file_path)
 
-    def return_send_file(self, file_path):
-        return send_file(file_path)
-
     def _get(self, params: ApiParams, request: Request) -> Response:
         """
-        Get the values of client-accessible dataset metadata keys.
+        Get the values of client-accessible dataset and retrun the byte stream of the requested file .
 
         Args:
-            json_data: Flask's URI parameter dictionary with dataset name
+            params: Flask's URI parameter dictionary with dataset name
             request: The original Request object containing query parameters
 
-        GET /api/v1/datasets/metadata?name=dname&metadata=dashboard.seen,server.deletion
+        GET /api/v1/datasets/inventory/{dataset}/{path}
         """
 
         dataset = params.uri["dataset"]
@@ -82,7 +67,7 @@ class DatasetsAccess(ApiBase):
         )
         try:
             file_tree = FileTree(self.config, self.logger)
-            dataset_location = file_tree.access_dataset(dataset.name)
+            dataset_location = file_tree.find_inventory(dataset.name)
             file_path = Path(os.path.join(dataset_location, Path(path)))
             if file_path.is_file():
                 return self.return_send_file(file_path)
