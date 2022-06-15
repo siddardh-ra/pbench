@@ -65,12 +65,6 @@ class TestDatasetsAccess:
     def mock_find_inventory(self, dataset):
         return "/dataset1/"
 
-    def mock_is_file(self):
-        return True
-
-    def mock_not_a_file(self):
-        return False
-
     def mock_send_file(self, file_path):
         return {"status": "OK"}
 
@@ -89,7 +83,7 @@ class TestDatasetsAccess:
 
     def test_not_a_file(self, query_get_as, monkeypatch):
         monkeypatch.setattr(FileTree, "find_inventory", self.mock_find_inventory)
-        monkeypatch.setattr(Path, "is_file", self.mock_not_a_file)
+        monkeypatch.setattr(Path, "is_file", lambda self: False)
         response = query_get_as("fio_2", "test", HTTPStatus.NOT_FOUND, "1-default")
 
         assert response.json == {"message": "File is not present in the given path"}
@@ -97,7 +91,7 @@ class TestDatasetsAccess:
     def test_dataset_in_given_path(self, query_get_as, monkeypatch):
 
         monkeypatch.setattr(FileTree, "find_inventory", self.mock_find_inventory)
-        monkeypatch.setattr(Path, "is_file", self.mock_is_file)
+        monkeypatch.setattr(Path, "is_file", lambda self: True)
         monkeypatch.setattr(DatasetsInventory, "return_send_file", self.mock_send_file)
 
         response = query_get_as("fio_1", "drb", HTTPStatus.OK, "1-default/default.csv")
